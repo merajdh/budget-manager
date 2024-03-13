@@ -13,3 +13,7 @@ val Secondary = Color(0xFF193066)
 val IncomingColor = Color(0xFF67D4CA)
 val ExpanseColor = Color(0xFFF28080)
 
+val LightGray = Color(0xFFDDE0E4)
+val LightDarkColor = Color(0xFF171720)
+
+
