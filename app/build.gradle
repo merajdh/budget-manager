@@ -67,7 +67,8 @@ dependencies {
     // Navigation
     implementation "androidx.navigation:navigation-compose"
 
-
+    //liveData
+    implementation "androidx.compose.runtime:runtime-livedata"
 
     // Coroutines
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1"
@@ -79,7 +80,11 @@ dependencies {
     implementation "dev.burnoo:cokoin-android-navigation:0.3.2"
 
     // Room
-    implementation "androidx.room:room-ktx:2.5.0-alpha01"
-    kapt "androidx.room:room-compiler:2.4.2"
+    implementation "androidx.room:room-ktx:2.5.0-alpha02"
+    kapt "androidx.room:room-compiler:2.5.0-alpha02"
+
+
+    //gson
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
 
 }

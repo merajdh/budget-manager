@@ -24,7 +24,7 @@ val MyTypography = Typography(
     titleMedium = TextStyle(
         fontFamily = Fonts,
         fontWeight = FontWeight.W300,
-        fontSize = 18.sp
+        fontSize = 20.sp
     ),
 
     labelMedium = TextStyle(

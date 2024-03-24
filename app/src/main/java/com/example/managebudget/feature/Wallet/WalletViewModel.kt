@@ -10,9 +10,12 @@ import kotlinx.coroutines.launch
 class WalletViewModel(private val walletDao : WalletDao)
     : ViewModel(){
 
-    val transactionName  = MutableLiveData<List<WalletData>>()
+    val transactionName  = MutableLiveData("")
+    val transactionCount  = MutableLiveData("")
+    val transactionType  = MutableLiveData("")
+    val transactionData = MutableLiveData<List<WalletData>>()
 
-    fun addTransaction(data :WalletData){
+    fun insertOrUpdateData(data :WalletData){
         viewModelScope.launch {
             val walletList = arrayListOf<WalletData>()
             walletList.add(data)
@@ -21,7 +24,16 @@ class WalletViewModel(private val walletDao : WalletDao)
     }
     fun getAll( ){
         viewModelScope.launch {
-            transactionName.value = walletDao.getAll()
+            transactionData.value = walletDao.getAll()
         }
+    }
+
+    fun addDataWallet(){
+        val data = WalletData(
+            name = transactionName.value!!,
+            type = transactionType.value!!,
+            Count = transactionCount.value!!
+        )
+        insertOrUpdateData(data)
     }
 }

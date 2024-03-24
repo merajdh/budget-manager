@@ -1,6 +1,5 @@
 package com.example.managebudget.feature
 
-import android.view.SurfaceControl.Transaction
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,18 +14,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import com.example.managebudget.Components.CustomDialog
+import com.example.managebudget.feature.Wallet.WalletDialogViewMode
+import com.example.managebudget.feature.Wallet.WalletViewModel
 import com.example.managebudget.ui.theme.ExpanseColor
 import com.example.managebudget.ui.theme.IncomingColor
 import com.example.managebudget.ui.theme.LightDarkColor
 import com.example.managebudget.ui.theme.LightGray
 import com.example.managebudget.ui.theme.ManageBudgetTheme
 import com.example.managebudget.ui.theme.PrimaryLight
+import dev.burnoo.cokoin.navigation.getNavViewModel
 
 @Composable
 fun WalletScreen() {
@@ -34,6 +36,9 @@ fun WalletScreen() {
     val currentPrice = remember {
         mutableStateOf("۱,۰۰۰,۰۰۰")
     }
+
+    val dialogViewMode = getNavViewModel<WalletDialogViewMode>()
+    val walletViewMode = getNavViewModel<WalletViewModel>()
     ManageBudgetTheme() {
 
         Column(
@@ -41,8 +46,6 @@ fun WalletScreen() {
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.onBackground)
         ) {
-
-
             Surface(
                 color = MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
@@ -55,7 +58,14 @@ fun WalletScreen() {
 
             ) {
 
+                if (dialogViewMode.isDialogOpen) {
+                    CustomDialog(onDismiss = { dialogViewMode.onDismiss() }, onConfirm = {
+                        walletViewMode.addDataWallet()
+                        walletViewMode.getAll()
+                    })
 
+
+                }
                 Column(modifier = Modifier.fillMaxSize()) {
                     InComeExpanse(
                         modifier = Modifier
@@ -68,26 +78,27 @@ fun WalletScreen() {
                     LastTransactions(
                         modifier = Modifier
                             .weight(0.6f)
-                    )
+                    ) {
+                        dialogViewMode.onClick()
+                    }
                 }
             }
         }
 
     }
-
 }
 
 @OptIn(ExperimentalUnitApi::class)
 @Composable
 fun InComeExpanse(modifier: Modifier, currentPrice: String) {
 
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally ) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
 
         Text(
             text = "باقی مانده فعلی",
-            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+            color = MaterialTheme.colorScheme.onPrimary,
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 35.dp )
+            modifier = Modifier.padding(top = 35.dp)
         )
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
             Text(
@@ -105,7 +116,7 @@ fun InComeExpanse(modifier: Modifier, currentPrice: String) {
                 countText = "۱,۰۰۰,۰۰۰",
                 modifier = Modifier
                     .weight(0.5f)
-                    .padding(start = 25.dp, end = 8.dp)
+                    .padding(start = 25.dp, end = 6.dp)
             )
             InComeExpanseCard(
                 backColor = IncomingColor,
@@ -113,7 +124,7 @@ fun InComeExpanse(modifier: Modifier, currentPrice: String) {
                 countText = "۱۰۰,۰۰۰,۰۰۰,۰۰۰",
                 modifier = Modifier
                     .weight(0.5f)
-                    .padding(start = 8.dp, end = 25.dp)
+                    .padding(start = 6.dp, end = 25.dp)
             )
 
 
@@ -145,16 +156,19 @@ fun InComeExpanseCard(backColor: Color, titleText: String, countText: String, mo
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f),
                 text = titleText,
                 maxLines = 1,
-                letterSpacing = TextUnit(2f , TextUnitType.Sp),
+                letterSpacing = TextUnit(2f, TextUnitType.Sp),
                 style = MaterialTheme.typography.bodyMedium,
+
                 modifier = Modifier.padding(top = 15.dp)
 
             )
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
                 Text(
                     text = "$countText تومان",
-                    letterSpacing = TextUnit(3f , TextUnitType.Sp),
+                    letterSpacing = TextUnit(3f, TextUnitType.Sp),
                     style = MaterialTheme.typography.titleMedium,
+                    fontSize = TextUnit(17f , TextUnitType.Sp),
+
                     modifier = Modifier.padding(bottom = 17.dp)
                 )
             }
@@ -163,11 +177,9 @@ fun InComeExpanseCard(backColor: Color, titleText: String, countText: String, mo
 }
 
 @Composable
-fun LastTransactions(modifier: Modifier) {
+fun LastTransactions(modifier: Modifier, onClick: () -> Unit) {
 
     Box(modifier = modifier) {
-
-
         Column(modifier = modifier.fillMaxSize()) {
             TransactionsLazyColumn()
 
@@ -175,13 +187,16 @@ fun LastTransactions(modifier: Modifier) {
         AddFloatingButton(
             Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 25.dp))
+                .padding(bottom = 15.dp)
+        ) {
+            onClick.invoke()
+        }
     }
 }
 
 @Composable
 fun TransactionsLazyColumn() {
-    LazyColumn(){
+    LazyColumn() {
         item {
             TransactionItems()
         }
@@ -189,17 +204,20 @@ fun TransactionsLazyColumn() {
 }
 
 @Composable
-fun TransactionItems(){
+fun TransactionItems() {
 
-    Row(Modifier.fillMaxWidth()){
+    Row(Modifier.fillMaxWidth()) {
     }
 }
+
 @Composable
-fun AddFloatingButton(modifier: Modifier) {
-    FloatingActionButton(onClick = { /*TODO*/ },
+fun AddFloatingButton(modifier: Modifier, onClick: () -> Unit) {
+    FloatingActionButton(
+        onClick = { onClick.invoke() },
         containerColor = MaterialTheme.colorScheme.secondary,
         shape = RoundedCornerShape(50),
-        modifier = modifier) {
+        modifier = modifier
+    ) {
         Text(
             modifier = Modifier
                 .padding(horizontal = 35.dp)
