@@ -5,9 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 
-class WalletDialogViewMode  :ViewModel() {
+class WalletDialogViewModel  :ViewModel() {
     var isDialogOpen by mutableStateOf(false)
-        private set
 
     fun onClick(){
         isDialogOpen = true

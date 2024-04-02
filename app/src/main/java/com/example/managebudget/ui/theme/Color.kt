@@ -8,9 +8,9 @@ val PrimaryDark = Color(0xFF161622)
 
 
 val PrimaryVariant = Color(0xFF131822)
-val Secondary = Color(0xFF252A57)
+val Secondary = Color(0xFF373E7A)
 
-val IncomingColor = Color(0xFF5ACCAC)
+val IncomingColor = Color(0xFF4EB195)
 val ExpanseColor = Color(0xFFF28080)
 
 val LightGray = Color(0xFFDDE0E4)

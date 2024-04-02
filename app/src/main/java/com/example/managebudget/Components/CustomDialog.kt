@@ -1,5 +1,6 @@
 package com.example.managebudget.Components
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,6 +26,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
@@ -37,12 +39,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.ExperimentalUnitApi
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -50,6 +53,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.managebudget.R
 import com.example.managebudget.data.RadioItems
+import com.example.managebudget.extensions.formatTomanWithCommas
 import com.example.managebudget.feature.Wallet.WalletViewModel
 import com.example.managebudget.ui.theme.ExpanseColor
 import com.example.managebudget.ui.theme.IncomingColor
@@ -64,11 +68,15 @@ fun CustomDialog(
 ) {
     val walletViewModel = getNavViewModel<WalletViewModel>()
 
+    val context = LocalContext.current
     var colorStateInCome by remember {
         mutableStateOf(IncomingColor)
     }
     var colorStateExpanse by remember {
         mutableStateOf(ExpanseColor.copy(alpha = 0.2f))
+    }
+    var radiobuttonType by remember {
+        mutableStateOf(false)
     }
     val radioState = remember {
         mutableStateListOf(
@@ -83,16 +91,21 @@ fun CustomDialog(
                 R.drawable.ic_up_growth,
             )
         )
+
     }
+
     val transactionCount by walletViewModel.transactionCount.observeAsState()
     val transactionName by walletViewModel.transactionName.observeAsState()
     val transactionType by walletViewModel.transactionType.observeAsState()
+
+
     Dialog(
         onDismissRequest = { onDismiss.invoke() }, properties = DialogProperties(
             usePlatformDefaultWidth = false
         )
     ) {
         Card(
+
             border = BorderStroke(2.dp, color = MaterialTheme.colorScheme.onBackground),
             elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
@@ -127,7 +140,7 @@ fun CustomDialog(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(0.12f)
+                        .weight(0.15f)
                         .padding(top = 5.dp),
                     contentAlignment = Alignment.CenterEnd
                 ) {
@@ -135,11 +148,11 @@ fun CustomDialog(
                         text = "تراکنش جدید",
                         modifier = Modifier
                             .padding(end = 30.dp)
-                            .padding(vertical = 10.dp),
+                            .padding(vertical = 5.dp),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimary,
-                        letterSpacing = TextUnit(3f , TextUnitType.Sp)
+                        letterSpacing = TextUnit(3f, TextUnitType.Sp)
                     )
                 }
 
@@ -207,6 +220,7 @@ fun CustomDialog(
                                     .weight(0.3f)
 
                                     .clickable {
+
                                         radioState.replaceAll {
                                             it.copy(
                                                 isSelected = it.title == info.title
@@ -219,18 +233,23 @@ fun CustomDialog(
                                     colors = RadioButtonDefaults.colors(
                                         selectedColor = Color.Transparent,
                                         unselectedColor = Color.Transparent
-                                    ), selected = info.isSelected, onClick = {
+                                    ), selected = info.isSelected == transactionType, onClick = {
 
+                                        walletViewModel.transactionType.value = info.isSelected
                                         radioState.replaceAll {
                                             it.copy(
                                                 isSelected = it.title == info.title
                                             )
+
                                         }
 
                                         if (index == 0) {
+                                            radiobuttonType = true
                                             colorStateExpanse = ExpanseColor
                                             colorStateInCome = IncomingColor.copy(alpha = 0.3f)
                                         } else {
+                                            radiobuttonType = false
+
                                             colorStateInCome = IncomingColor
                                             colorStateExpanse = ExpanseColor.copy(alpha = 0.3f)
                                         }
@@ -286,16 +305,33 @@ fun CustomDialog(
                     walletViewModel.transactionName.value = it
                 }
                 Spacer(modifier = Modifier.weight(0.02f))
+
                 MainTextField(
                     icon = R.drawable.ic_wallet_unselected,
                     modifier = Modifier.weight(0.1f),
-                    keyboardType = KeyboardType.Number,
+                    keyboardType = KeyboardType.NumberPassword,
                     supportText = "تومان",
                     edtName = "مقدار تراکنش",
-                    textValue = transactionCount.toString()
+                    textValue =
+                    transactionCount.toString()
                 ) {
                     walletViewModel.transactionCount.value = it
+
                 }
+                if (transactionCount != ""){
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+
+                    Text(
+                        text = formatTomanWithCommas(transactionCount?.toLong() ?: 0),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = TextUnit(14f, TextUnitType.Sp),
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
+                        modifier = Modifier
+                            .align(Alignment.End)
+                            .padding(start = 32.dp, top = 8.dp)
+                    )}
+                }
+
                 Spacer(modifier = Modifier.weight(0.13f))
 
 
@@ -323,7 +359,18 @@ fun CustomDialog(
                     Spacer(modifier = Modifier.width(20.dp))
 
                     Button(
-                        onClick = { onConfirm.invoke() },
+                        onClick = {
+                            if (transactionCount != "" && transactionName != "") {
+                                onConfirm.invoke()
+                                onDismiss.invoke()
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "لطفا اطلاعات خواسته شده را وارد کنید ",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        },
                         modifier = Modifier.weight(0.6f),
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
@@ -349,4 +396,7 @@ fun CustomDialog(
         }
     }
 
+
 }
+
+
