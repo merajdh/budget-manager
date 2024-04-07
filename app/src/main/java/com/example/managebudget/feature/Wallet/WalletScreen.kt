@@ -144,7 +144,7 @@ fun InComeExpanse(
                     }
 
                 }.joinToString("")
-                    .let { removeZeros(formatNumberWithCurrency(it.toInt())) }
+                    .let { removeZeros(formatNumberWithCurrency(it.toInt().toDouble())) }
 
             Log.v("last", text.first().toString())
 
@@ -171,7 +171,7 @@ fun InComeExpanse(
                 backColor = ExpanseColor,
                 titleText = "هزینه ها",
                 countText = currentExpense.map { persianDigits[it.toString().toInt()] }
-                    .joinToString("").let { removeZeros(formatNumberWithCurrency(it.toInt())) },
+                    .joinToString("").let { removeZeros(formatNumberWithCurrency(it.toInt().toDouble())) },
                 modifier = Modifier
                     .weight(0.5f)
                     .padding(start = 25.dp, end = 6.dp)
@@ -180,7 +180,7 @@ fun InComeExpanse(
                 backColor = IncomingColor,
                 titleText = "درآمد",
                 countText = currentIncome.map { persianDigits[it.toString().toInt()] }
-                    .joinToString("").let { removeZeros(formatNumberWithCurrency(it.toInt())) },
+                    .joinToString("").let { removeZeros(formatNumberWithCurrency(it.toInt().toDouble())) },
                 modifier = Modifier
                     .weight(0.5f)
                     .padding(start = 6.dp, end = 25.dp)

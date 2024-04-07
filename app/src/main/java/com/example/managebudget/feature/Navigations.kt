@@ -23,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.managebudget.Components.ClearRippleTheme
 import com.example.managebudget.R
 import com.example.managebudget.data.BottomNavigationItems
+import com.example.managebudget.feature.CryptoCurrency.CryptoCurrencyScreen
 import com.example.managebudget.feature.Setting.SettingScreen
 import com.example.managebudget.ui.theme.LightDarkColor
 import com.example.managebudget.ui.theme.LightGray
@@ -44,19 +45,26 @@ fun Navigation() {
                 val backStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = backStackEntry?.destination
                 val items = listOf(
+
+                    BottomNavigationItems(
+                        Screens.CryptoCurrencyScreen.route,
+                        R.drawable.cryptocurrency,
+                        R.drawable.cryptocurrency_unselected
+
+                    ),
                     BottomNavigationItems(
                         Screens.WalletScreen.route,
                         R.drawable.ic_wallet_selected,
                         R.drawable.ic_wallet_unselected
 
                     ),
-
                     BottomNavigationItems(
                         Screens.SettingScreen.route,
                         R.drawable.ic_setting_selected,
                         R.drawable.ic_setting_unselected
 
                     ),
+
                 )
 
                 CompositionLocalProvider(
@@ -127,6 +135,10 @@ fun Navigation() {
             ) {
                 composable(Screens.WalletScreen.route) {
                     WalletScreen()
+                }
+
+                composable(Screens.CryptoCurrencyScreen.route) {
+                    CryptoCurrencyScreen()
                 }
                 composable(Screens.SettingScreen.route) {
                     SettingScreen()

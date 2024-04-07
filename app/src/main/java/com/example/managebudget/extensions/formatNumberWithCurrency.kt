@@ -5,7 +5,7 @@ import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
 import java.util.Locale
 
-fun formatNumberWithCurrency(number: Int): String {
+fun formatNumberWithCurrency(number: Double): String {
     val persianLocale = Locale("fa", "IR")
     val symbols = DecimalFormatSymbols(persianLocale)
 
