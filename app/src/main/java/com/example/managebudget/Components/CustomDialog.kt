@@ -54,6 +54,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.managebudget.R
 import com.example.managebudget.data.RadioItems
 import com.example.managebudget.extensions.formatTomanWithCommas
+import com.example.managebudget.feature.Wallet.WalletDialogViewModel
 import com.example.managebudget.feature.Wallet.WalletViewModel
 import com.example.managebudget.ui.theme.ExpanseColor
 import com.example.managebudget.ui.theme.IncomingColor
@@ -67,6 +68,7 @@ fun CustomDialog(
     onConfirm: () -> Unit
 ) {
     val walletViewModel = getNavViewModel<WalletViewModel>()
+    val dialogViewModel = getNavViewModel<WalletDialogViewModel>()
 
     val context = LocalContext.current
     var colorStateInCome by remember {
@@ -342,7 +344,8 @@ fun CustomDialog(
                 ) {
                     Spacer(modifier = Modifier.width(30.dp))
                     Button(
-                        onClick = { onDismiss.invoke() },
+                        onClick = { onDismiss.invoke()
+                                  dialogViewModel.onDismiss()},
                         modifier = Modifier.weight(0.4f),
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onBackground),
@@ -361,6 +364,8 @@ fun CustomDialog(
                     Button(
                         onClick = {
                             if (transactionCount != "" && transactionName != "") {
+                                walletViewModel.getAll()
+                                dialogViewModel.onClick()
                                 onConfirm.invoke()
                                 onDismiss.invoke()
                             } else {

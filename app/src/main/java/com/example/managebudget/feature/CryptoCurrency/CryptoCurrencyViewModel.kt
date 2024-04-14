@@ -7,27 +7,49 @@ import com.example.managebudget.data.CryptoResponse
 import com.example.managebudget.data.DollarResponse
 import com.example.managebudget.model.Repository.CryptoRepository.CryptoRepository
 import com.example.managebudget.model.Repository.DollarRepository.DollarRepository
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+
 
 class CryptoCurrencyViewModel(
     private val dollarRepository: DollarRepository,
     private val cryptoRepository: CryptoRepository,
+    isInternetConnected: Boolean
+) : ViewModel() {
 
-    ) : ViewModel() {
+    init {
+        refreshCryptoData(isInternetConnected)
+        refreshDollarData(isInternetConnected)
+    }
 
     var dollarData = MutableLiveData<DollarResponse>()
     var cryptoData = MutableLiveData<CryptoResponse>()
-    fun getDollarData(){
+    fun refreshDollarData(isInternetConnected: Boolean) {
         viewModelScope.launch {
-            val data=dollarRepository.getDataDollar()
-            dollarData.value =data
+            if (isInternetConnected) {
+                val dollarData = async { dollarRepository.getDataDollar() }
+                getDollarData(dollarData.await())
+            }
         }
     }
 
-    fun getCryptoData(){
+    fun getDollarData(data: DollarResponse) {
+        dollarData.value = data
+    }
+
+    fun refreshCryptoData(isInternetConnectedd: Boolean) {
         viewModelScope.launch {
-            val data = cryptoRepository.CryptoData()
-            cryptoData.value = data
+            if (isInternetConnectedd) {
+                val cryptoData = async { cryptoRepository.CryptoData() }
+                getCryptoData(cryptoData.await())
+
+            }
         }
     }
+
+    fun getCryptoData(data: CryptoResponse) {
+
+        cryptoData.value = data
+    }
+
 }

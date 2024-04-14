@@ -27,6 +27,12 @@ class WalletViewModel(private val walletDao: WalletDao) : ViewModel() {
         }
     }
 
+    fun deleteItem(item : WalletData){
+        viewModelScope.launch {
+            walletDao.deleteTransaction(item)
+        }
+    }
+
 
     fun resetTransaction() {
         transactionCount.value = ""
@@ -97,7 +103,7 @@ class WalletViewModel(private val walletDao: WalletDao) : ViewModel() {
             Count = if (transactionType.value!!) {
                 "-${transactionCount.value!!}"
             } else {
-                transactionCount.value+"0"
+                transactionCount.value
 
             }
         )

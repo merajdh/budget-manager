@@ -103,6 +103,10 @@ dependencies {
     implementation 'com.google.mlkit:translate:17.0.0'
 
 
+    // lottie animation
+    implementation "com.airbnb.android:lottie-compose:6.0.0"
+
+
 
 
 

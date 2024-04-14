@@ -1,6 +1,7 @@
 package com.example.managebudget.db
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -14,5 +15,11 @@ interface WalletDao {
     suspend fun insertOrUpdate(walletDao: List<WalletData>)
     @Query("SELECT * FROM Wallet_Table")
     suspend fun getAll(): List<WalletData>
+
+    @Query("DELETE FROM Wallet_Table")
+    suspend fun deleteAll()
+
+    @Delete
+    suspend fun deleteTransaction( walletData : WalletData )
 
 }

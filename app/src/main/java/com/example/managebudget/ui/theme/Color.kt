@@ -11,7 +11,7 @@ val PrimaryVariant = Color(0xFF131822)
 val Secondary = Color(0xFF373E7A)
 
 val IncomingColor = Color(0xFF4EB195)
-val ExpanseColor = Color(0xFFF28080)
+val ExpanseColor = Color(0xFFE06B6B)
 
 val LightGray = Color(0xFFDDE0E4)
 val LightDarkColor = Color(0xFF232331)

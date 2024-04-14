@@ -1,5 +1,6 @@
 package com.example.managebudget.feature.CryptoCurrency
 
+import android.app.Activity
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
@@ -7,6 +8,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.palette.graphics.Palette
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,11 +27,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -40,158 +44,262 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.substring
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.core.view.ViewCompat
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCancellationBehavior
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieAnimatable
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.example.managebudget.R
+import com.example.managebudget.extensions.NetworkChecker
 import com.example.managebudget.extensions.formatNumberWithCurrency
 import com.example.managebudget.ui.theme.ExpanseColor
 import com.example.managebudget.ui.theme.IncomingColor
+import com.example.managebudget.ui.theme.LightDarkColor
 import com.example.managebudget.ui.theme.LightGray
+import com.example.managebudget.ui.theme.ManageBudgetTheme
+import com.example.managebudget.ui.theme.PrimaryLight
+import com.example.managebudget.ui.theme.Secondary
 import dev.burnoo.cokoin.navigation.getNavViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import org.koin.core.parameter.parametersOf
+import java.util.Locale
+import kotlin.math.absoluteValue
 
 
 @Composable
 fun CryptoCurrencyScreen(
 ) {
+    val context = LocalContext.current
 
-    val viewModel = getNavViewModel<CryptoCurrencyViewModel>()
-    viewModel.getDollarData()
-    viewModel.getCryptoData()
+    val viewModel = getNavViewModel<CryptoCurrencyViewModel>(parameters = {
+        parametersOf(NetworkChecker(context).isInternetConnected)
+    })
+    viewModel.refreshDollarData(NetworkChecker(context).isInternetConnected)
+    viewModel.refreshCryptoData(NetworkChecker(context).isInternetConnected)
     val dollar = viewModel.dollarData.observeAsState()
     val crypto = viewModel.cryptoData.observeAsState()
+    ManageBudgetTheme(color = MaterialTheme.colorScheme.secondary, isDark = false) {
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.onBackground)
-    ) {
-        Surface(
-            color = MaterialTheme.colorScheme.primary,
-            shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
-            shadowElevation = 8.dp,
-            tonalElevation = 2.dp,
+        Column(
             modifier = Modifier
-                .weight(0.98f)
-                .fillMaxWidth()
-                .padding(bottom = 15.dp)
-
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.onBackground)
         ) {
+            Surface(
+                color = MaterialTheme.colorScheme.primary,
+                shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
+                shadowElevation = 8.dp,
+                tonalElevation = 2.dp,
+                modifier = Modifier
+                    .weight(0.98f)
+                    .fillMaxWidth()
+                    .padding(bottom = 15.dp)
+
+            ) {
 
 
-            LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
-                item {
-                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
+                    item {
+                        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
 
-                        Text(
-                            modifier = Modifier
-                                .wrapContentSize(Alignment.CenterEnd)
-                                .padding(end = 15.dp, bottom = 20.dp),
-                            text = "قیمت ارزهای دیجیتال",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.secondary),
+
+                                ) {
+                                Text(
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.95f)
+                                        .align(Alignment.End)
+                                        .padding(bottom = 20.dp, top = 25.dp),
+                                    text = "قیمت ارزهای دیجیتال",
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = PrimaryLight
+                                )
+                                Card(
+                                    shape = RoundedCornerShape(topEnd = 24.dp, topStart = 24.dp),
+
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(25.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
+                                ) {
+
+                                }
+
+                            }
+
+                        }
                     }
-                }
-                if (crypto.value != null && dollar.value != null) {
+                    if (crypto.value != null && dollar.value != null && NetworkChecker(context).isInternetConnected) {
+                        val itemCount = crypto.value!!.data.size
 
-                    items(crypto.value!!.data) {
 
-                        if (it.rAW != null) {
+                        items(itemCount) {
+                            val data = crypto.value!!.data[it]
 
-                            val persianDigits =
-                                arrayOf("۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹")
 
-                            val cryptoPrice =
-                                String.format("%.15f", it.rAW.uSD.pRICE).toDouble()
+                            if (data.rAW != null) {
 
-                            val price =
-                                cryptoPrice * dollar.value!!.p.replace(",", "").dropLast(1)
-                                    .toInt()
-                            val fullPrice = String.format("%.15f", price)
-                            var fullConverted = if (fullPrice.toDouble() >= 10000) {
-                                fullPrice.toDouble().toUInt().toString()
+                                val persianDigits =
+                                    arrayOf("۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹")
 
-                            } else {
-                                fullPrice.substring(0, 6)
+                                val cryptoPrice =
+                                    String.format(
+                                        locale = Locale.ENGLISH,
+                                        "%.15f",
+                                        data.rAW.uSD.pRICE
+                                    ).toDouble()
 
-                            }
-                            val convertedPrice =
-                                formatNumberWithCurrency(fullConverted.toDouble())
-                            Log.v("datas", fullPrice.toString())
-                            val resultColor = when {
-                                it.rAW.uSD.cHANGEPCT24HOUR.toString().substring(0, 4)
-                                    .toDouble() < 0 -> {
-                                    ExpanseColor
+                                val price =
+                                    cryptoPrice * dollar.value!!.p.replace(",", "").dropLast(1)
+                                        .toDouble()
+                                val fullPrice =
+                                    String.format(locale = Locale.ENGLISH, "%.15f", price)
+                                val fullConverted = if (fullPrice.toDouble() >= 1000) {
+                                    fullPrice.toDouble().toUInt().toString()
+
+                                } else {
+                                    fullPrice.substring(0, 6)
+
                                 }
-
-                                it.rAW.uSD.cHANGEPCT24HOUR.toString().substring(0, 4)
-                                    .toDouble() > 0 -> {
-                                    IncomingColor
-                                }
-
-                                it.rAW.uSD.cHANGEPCT24HOUR.toString().substring(0, 4)
-                                    .toDouble() == 0.0 -> {
-                                    LightGray
-                                }
-
-                                else -> {
-                                    LightGray
-                                }
-                            }
-
-
-                            val textChange =
-                                it.rAW.uSD.cHANGEPCT24HOUR.toString().substring(0, 4).map {
-                                    if (it != '.' && it != '-') {
-                                        persianDigits[it.toString().toInt()]
-                                    } else {
-                                        if (it == '.') {
-                                            '.'
+                                val convertedPrice =
+                                    formatNumberWithCurrency(
+                                        fullConverted.toDouble(),
+                                        if (fullConverted.toDouble() >= 100) {
+                                            ""
 
                                         } else {
-                                            '-'
+                                            "0.00"
+
                                         }
+                                    )
+                                Log.v("datas", data.coinInfo.id)
+                                val resultColor = when {
+                                    data.rAW.uSD.cHANGEPCT24HOUR.toString().substring(0, 4)
+                                        .toDouble() < 0 -> {
+                                        ExpanseColor
                                     }
-                                }.joinToString("")
 
-                            CryptoPriceItems(
-                                modifier = Modifier.align(Alignment.CenterHorizontally),
-                                cryptoName = it.coinInfo.fullName,
-                                cryptoNickname = it.coinInfo.name,
-                                cryptoIcon = "https://www.cryptocompare.com" + it.coinInfo.imageUrl,
-                                price = convertedPrice,
-                                top24Hour = textChange.substring(0, 4),
-                                changeColor = resultColor
+                                    data.rAW.uSD.cHANGEPCT24HOUR.toString().substring(0, 4)
+                                        .toDouble() > 0 -> {
+                                        IncomingColor
+                                    }
+
+                                    data.rAW.uSD.cHANGEPCT24HOUR.toString().substring(0, 4)
+                                        .toDouble() == 0.0 -> {
+                                        Color(0xFFAAADB1)
+                                    }
+
+                                    else -> {
+                                        LightGray
+                                    }
+                                }
 
 
-                            )
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth(0.9f)
-                                    .height(2.5.dp)
-                                    .align(Alignment.CenterHorizontally),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.onBackground),
-                                shape = RoundedCornerShape(100)
-                            ) {
+                                val textChange =
+                                    data.rAW.uSD.cHANGEPCT24HOUR.toString().substring(0, 4).map {
+                                        if (it != '.' && it != '-') {
+                                            persianDigits[it.toString().toInt()]
+                                        } else {
+                                            if (it == '.') {
+                                                '.'
+
+                                            } else {
+                                                '-'
+                                            }
+                                        }
+                                    }.joinToString("")
+
+
+                                CryptoPriceItems(
+                                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                                    cryptoName = data.coinInfo.fullName,
+                                    cryptoNickname = data.coinInfo.name,
+                                    cryptoIcon = "https://www.cryptocompare.com" + data.coinInfo.imageUrl,
+                                    price = convertedPrice,
+                                    top24Hour = if (textChange.endsWith('-')) {
+
+                                        textChange.substring(0, 5)
+                                    } else {
+                                        textChange.substring(0, 4)
+
+                                    },
+                                    changeColor = resultColor
+                                )
+                                if (it != 14) {
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth(0.9f)
+                                            .height(2.5.dp)
+                                            .align(Alignment.CenterHorizontally),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.onBackground),
+                                        shape = RoundedCornerShape(100)
+                                    ) {
+
+                                    }
+                                }
 
                             }
                         }
+                    } else {
+                        item {
+                            val composition by rememberLottieComposition(
+                                LottieCompositionSpec.RawRes(
+                                    R.raw.crypto_data
+                                )
+                            )
+                            val lottieAnimatable = rememberLottieAnimatable()
+
+                            LaunchedEffect(Unit) {
+                                lottieAnimatable.animate(
+                                    composition,
+                                    iterations = LottieConstants.IterateForever,
+                                )
+                            }
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+
+                                LottieAnimation(
+                                    modifier = Modifier
+                                        .size(60.dp),
+                                    composition = composition,
+                                    iterations = LottieConstants.IterateForever,
+
+
+                                    )
+                            }
+
+                        }
                     }
+
                 }
 
             }
 
         }
-
     }
 }
 
@@ -226,6 +334,8 @@ fun CryptoPriceItems(
             ?: palette.darkVibrantSwatch
         dominantColor = dominantSwatch?.rgb?.let { Color(it) } ?: Color.White
     }
+
+
     Card(
 
         modifier = modifier
@@ -318,16 +428,6 @@ fun CryptoPriceItems(
                     )
                 }
             }
-
-
         }
-
     }
-
 }
-
-@Preview()
-@Composable
-fun pre() {
-}
-

@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 
-class WalletDialogViewModel :ViewModel() {
+class DeleteItemViewModel : ViewModel(){
     var isDialogOpen by mutableStateOf(false)
 
     fun onClick(){
