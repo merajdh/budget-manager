@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.managebudget.Components.CustomDialog
 import com.example.managebudget.Components.DeleteDialog
 import com.example.managebudget.R
@@ -46,6 +47,8 @@ import com.example.managebudget.ui.theme.ExpanseColor
 import com.example.managebudget.ui.theme.IncomingColor
 import com.example.managebudget.ui.theme.ManageBudgetTheme
 import com.example.managebudget.ui.theme.PrimaryLight
+import com.example.managebudget.utils.Screens
+import dev.burnoo.cokoin.navigation.getNavController
 import dev.burnoo.cokoin.navigation.getNavViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -59,6 +62,7 @@ fun WalletScreen() {
     val walletViewModel = getNavViewModel<WalletViewModel>()
     val deleteItemDialog = getNavViewModel<DeleteItemViewModel>()
 
+    val navController = getNavController()
 
     val totalExpenses by walletViewModel.expensesData.observeAsState()
     val totalIncome by walletViewModel.incomesData.observeAsState()
@@ -100,6 +104,8 @@ fun WalletScreen() {
                 if (dialogViewModel.isDialogOpen) {
                     CustomDialog(onDismiss = {
                         dialogViewModel.onDismiss()
+                        walletViewModel.resetTransaction()
+
                     }, onConfirm = {
                         walletViewModel.addDataWallet()
 
@@ -134,6 +140,16 @@ fun WalletScreen() {
                             .weight(0.6f),
                         items = {
                             item.value = it
+                        },
+                        onClickMore = {
+
+
+                            navController.navigate(Screens.DetailWalletScreen.route) {
+
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                            }
                         }
 
                     ) {
@@ -264,7 +280,12 @@ fun InComeExpanseCard(backColor: Color, titleText: String, countText: String, mo
 
 @OptIn(ExperimentalUnitApi::class)
 @Composable
-fun LastTransactions(modifier: Modifier, items: (WalletData) -> Unit, onClick: () -> Unit) {
+fun LastTransactions(
+    modifier: Modifier,
+    items: (WalletData) -> Unit,
+    onClickMore: () -> Unit,
+    onClick: () -> Unit
+) {
 
     Box(modifier = modifier) {
         Column(modifier = modifier.fillMaxSize()) {
@@ -292,11 +313,14 @@ fun LastTransactions(modifier: Modifier, items: (WalletData) -> Unit, onClick: (
                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
                         modifier = Modifier
                             .padding(end = 30.dp)
+                            .clickable() {
+                                onClickMore.invoke()
+                            }
                     )
                 }
 
             }
-            TransactionsLazyColumn(){
+            TransactionsLazyColumn() {
                 items.invoke(it)
             }
 

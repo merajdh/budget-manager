@@ -24,6 +24,7 @@ import com.example.managebudget.Components.ClearRippleTheme
 import com.example.managebudget.R
 import com.example.managebudget.data.BottomNavigationItems
 import com.example.managebudget.feature.CryptoCurrency.CryptoCurrencyScreen
+import com.example.managebudget.feature.DetailWallet.DetailWalletScreen
 import com.example.managebudget.feature.Setting.SettingScreen
 import com.example.managebudget.ui.theme.LightDarkColor
 import com.example.managebudget.ui.theme.LightGray
@@ -142,6 +143,9 @@ fun Navigation() {
                 }
                 composable(Screens.SettingScreen.route) {
                     SettingScreen()
+                }
+                composable(Screens.DetailWalletScreen.route) {
+                    DetailWalletScreen()
                 }
 
             }
