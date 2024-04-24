@@ -13,6 +13,7 @@ class WalletViewModel(private val walletDao: WalletDao) : ViewModel() {
     val transactionName = MutableLiveData("")
     val transactionCount = MutableLiveData("")
     val transactionType = MutableLiveData(false)
+    val transactionTime = MutableLiveData("")
     val transactionData = MutableLiveData<List<WalletData>>()
     val expensesData = MutableLiveData(0)
     val incomesData = MutableLiveData(0)
@@ -46,7 +47,7 @@ class WalletViewModel(private val walletDao: WalletDao) : ViewModel() {
             val walletList = walletDao.getAll()
 
             currentTotalData.value = walletList.map {
-                it.Count?.toInt() ?: 0
+                it.count?.toInt() ?: 0
             }.sum()
         }
     }
@@ -60,7 +61,7 @@ class WalletViewModel(private val walletDao: WalletDao) : ViewModel() {
 
                 if (it.type) {
 
-                    it.Count.toString().replace("-", "").toInt()
+                    it.count.toString().replace("-", "").toInt()
 
                 } else {
                     0
@@ -77,7 +78,7 @@ class WalletViewModel(private val walletDao: WalletDao) : ViewModel() {
 
             incomesData.value = walletList.map {
                 if (!it.type) {
-                    it.Count?.toIntOrNull() ?: 0
+                    it.count?.toIntOrNull() ?: 0
                 } else {
                     0
                 }
@@ -100,12 +101,13 @@ class WalletViewModel(private val walletDao: WalletDao) : ViewModel() {
         val data = WalletData(
             name = transactionName.value!!,
             type = transactionType.value!!,
-            Count = if (transactionType.value!!) {
+            count = if (transactionType.value!!) {
                 "-${transactionCount.value!!}"
             } else {
                 transactionCount.value
 
-            }
+            },
+            time = transactionTime.value
         )
 
         insertOrUpdateData(data)

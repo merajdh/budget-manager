@@ -1,6 +1,8 @@
 package com.example.managebudget.feature
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,6 +40,7 @@ import com.example.managebudget.Components.CustomDialog
 import com.example.managebudget.Components.DeleteDialog
 import com.example.managebudget.R
 import com.example.managebudget.data.WalletData
+import com.example.managebudget.extensions.convertGregorianToPersian
 import com.example.managebudget.extensions.formatNumberWithCurrency
 import com.example.managebudget.extensions.removeZeros
 import com.example.managebudget.feature.Wallet.DeleteItemViewModel
@@ -52,9 +55,14 @@ import dev.burnoo.cokoin.navigation.getNavController
 import dev.burnoo.cokoin.navigation.getNavViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAdjusters
+import java.util.Locale
 
-lateinit var item: WalletData
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalUnitApi::class)
 @Composable
 fun WalletScreen() {
@@ -68,7 +76,6 @@ fun WalletScreen() {
     val totalIncome by walletViewModel.incomesData.observeAsState()
     val currentFinance by walletViewModel.currentTotalData.observeAsState()
     val scope = rememberCoroutineScope()
-
     walletViewModel.totalExpenses()
     walletViewModel.totalIncomes()
     walletViewModel.totalCurrent()
@@ -278,6 +285,7 @@ fun InComeExpanseCard(backColor: Color, titleText: String, countText: String, mo
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalUnitApi::class)
 @Composable
 fun LastTransactions(
@@ -335,6 +343,7 @@ fun LastTransactions(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TransactionsLazyColumn(item: (WalletData) -> Unit) {
     val walletViewModel = getNavViewModel<WalletViewModel>()
@@ -349,9 +358,9 @@ fun TransactionsLazyColumn(item: (WalletData) -> Unit) {
         if (walletHistory.value != null) {
             items(walletHistory.value!!.reversed().take(4)) { items ->
                 Spacer(modifier = Modifier.height(8.dp))
-                items.Count?.let { formatNumberWithCurrency(it.toDouble()) }?.let {
+                items.count?.let { formatNumberWithCurrency(it.toDouble()) }?.let {
                     TransactionItems(
-                        items.name, it, items.type
+                        items.name, it, items.type, items.time.toString()
                     ) {
                         item.invoke(items)
                         deleteItemDialog.onClick()
@@ -366,12 +375,14 @@ fun TransactionsLazyColumn(item: (WalletData) -> Unit) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalUnitApi::class)
 @Composable
 fun TransactionItems(
     transactionName: String,
     transactionCount: String,
     transactionType: Boolean,
+    transactionTime: String,
     onDelete: () -> Unit
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -396,55 +407,74 @@ fun TransactionItems(
                 pressedElevation = 0.dp
             )
         ) {
-
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Box( ){
                 Text(
-                    text = transactionName,
+                    text = transactionTime,
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(start = 15.dp)
+                    color = MaterialTheme.colorScheme.onPrimary.copy(0.7f),
+                    fontSize = TextUnit(10f, TextUnitType.Sp),
+                    modifier = Modifier
+                        .padding(start = 10.dp, top = 2.5.dp)
                 )
                 Row(
-                    modifier = Modifier.padding(end = 15.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+
+
+
                     Text(
-                        text = transactionCount,
+                        text = transactionName,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontSize = TextUnit(14f, TextUnitType.Sp),
-                        color = if (transactionType) {
-                            ExpanseColor
-                        } else {
-                            IncomingColor
-                        },
-                        modifier = Modifier.padding(end = 5.dp)
+                        modifier = Modifier
+                            .padding(start = 15.dp)
+                            .wrapContentHeight(Alignment.CenterVertically)
                     )
 
-                    Icon(
-                        painter = painterResource(
-                            id = if (transactionType) {
-                                R.drawable.ic_up_growth
+
+
+                    Row(
+                        modifier = Modifier.padding(end = 15.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = transactionCount,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontSize = TextUnit(14f, TextUnitType.Sp),
+                            color = if (transactionType) {
+                                ExpanseColor
                             } else {
-                                R.drawable.ic_down_growth
+                                IncomingColor
+                            },
+                            modifier = Modifier.padding(end = 5.dp)
+                        )
+
+                        Icon(
+                            painter = painterResource(
+                                id = if (transactionType) {
+                                    R.drawable.ic_up_growth
+                                } else {
+                                    R.drawable.ic_down_growth
+                                }
+                            ), contentDescription = null,
+                            modifier = Modifier
+                                .rotate(180f)
+                                .size(18.dp)
+                                .padding(top = 2.dp),
+                            tint = if (transactionType) {
+                                ExpanseColor
+                            } else {
+                                IncomingColor
                             }
-                        ), contentDescription = null,
-                        modifier = Modifier
-                            .rotate(180f)
-                            .size(18.dp)
-                            .padding(top = 2.dp),
-                        tint = if (transactionType) {
-                            ExpanseColor
-                        } else {
-                            IncomingColor
-                        }
-                    )
+                        )
+                    }
                 }
             }
+
+
         }
     }
 }

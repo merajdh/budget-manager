@@ -1,15 +1,14 @@
 package com.example.managebudget.feature.DetailWallet
 
-import androidx.compose.foundation.BorderStroke
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,21 +17,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -41,22 +39,21 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import com.example.managebudget.Components.ChipGroup
 import com.example.managebudget.Components.DeleteDialog
 import com.example.managebudget.R
 import com.example.managebudget.data.WalletData
 import com.example.managebudget.extensions.formatNumberWithCurrency
-import com.example.managebudget.feature.AddFloatingButton
 import com.example.managebudget.feature.TransactionItems
-import com.example.managebudget.feature.TransactionsLazyColumn
 import com.example.managebudget.feature.Wallet.DeleteItemViewModel
 import com.example.managebudget.feature.Wallet.WalletViewModel
-import com.example.managebudget.ui.theme.ExpanseColor
-import com.example.managebudget.ui.theme.IncomingColor
 import com.example.managebudget.ui.theme.ManageBudgetTheme
 import com.example.managebudget.utils.Screens
 import dev.burnoo.cokoin.navigation.getNavController
 import dev.burnoo.cokoin.navigation.getNavViewModel
+import java.time.LocalDate
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DetailWalletScreen() {
     val deleteItemDialog = getNavViewModel<DeleteItemViewModel>()
@@ -95,13 +92,17 @@ fun DetailWalletScreen() {
                 LastTransactions(modifier = Modifier.fillMaxSize(), items = {
                     item.value = it
                 }) {
-                    navController.popBackStack(route = Screens.WalletScreen.route, inclusive = false)
+                    navController.popBackStack(
+                        route = Screens.WalletScreen.route,
+                        inclusive = false
+                    )
                 }
             }
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalUnitApi::class)
 @Composable
 fun LastTransactions(
@@ -111,8 +112,9 @@ fun LastTransactions(
 ) {
 
     Box(modifier = modifier) {
-        Column(modifier = modifier.fillMaxSize()) {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+
+            Column(modifier = modifier.fillMaxSize(), horizontalAlignment = Alignment.End) {
 
                 Row(
                     horizontalArrangement = Arrangement.Start,
@@ -147,39 +149,97 @@ fun LastTransactions(
                 }
 
 
-            }
-            TransactionsLazyColumns() {
-                items.invoke(it)
-            }
+                var time by remember {
+                    mutableStateOf("کلی")
+                }
+                ChipGroup(
+                    modifier
+                        .fillMaxWidth()
+                        .padding(start = 23.dp)
+                        .weight(0.1f)
+                ) {
+                    time = it
+                }
 
+                TransactionsLazyColumns(
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(0.95f), type = time
+                ) {
+
+                    items.invoke(it)
+                }
+
+            }
         }
 
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TransactionsLazyColumns(item: (WalletData) -> Unit) {
+fun TransactionsLazyColumns(modifier: Modifier, type: String, item: (WalletData) -> Unit) {
     val walletViewModel = getNavViewModel<WalletViewModel>()
     walletViewModel.getAll()
     val walletHistory = walletViewModel.transactionData.observeAsState()
-    val deleteItemDialog = getNavViewModel<DeleteItemViewModel>()
 
+    var dateState by remember {
+        mutableStateOf(99999)
+    }
     LazyColumn(
-        modifier = Modifier.height(1000.dp),
+        modifier = modifier.height(1000.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
         if (walletHistory.value != null) {
-            items(walletHistory.value!!.reversed()) { items ->
-                Spacer(modifier = Modifier.height(8.dp))
-                items.Count?.let { formatNumberWithCurrency(it.toDouble()) }?.let {
-                    TransactionItems(
-                        items.name, it, items.type
-                    ) {
-                        item.invoke(items)
-                        deleteItemDialog.onClick()
-                    }
+            val today = LocalDate.now()
 
+            val endDate = today
+
+            dateState = when (type) {
+                "کلی" -> 99999
+                "ماهانه" -> 30
+                "هفتگی" -> 7
+                "درآمد ها" -> 99999
+                "هزینه ها" -> 99999
+                else -> {
+                    99999
+                }
+            }
+            val startDate = today.minusDays(dateState.toLong())
+            val filteredList = walletHistory.value!!.filter { item ->
+                val itemDate = LocalDate.parse(item.time)
+                !itemDate.isBefore(startDate) && !itemDate.isAfter(endDate)
+            }
+            val sortedList = filteredList.sortedBy { item ->
+                LocalDate.parse(item.time)
+            }
+
+            items(sortedList) { items ->
+                Spacer(modifier = Modifier.height(8.dp))
+                items.count?.let { formatNumberWithCurrency(it.toDouble()) }?.let {
+                    if (type == "هزینه ها") {
+                        if (items.type) {
+                            TransactionItems(
+                                items.name, it, items.type, items.time.toString()
+                            ) {
+                            }
+                        }
+                    } else {
+                        if (type == "درآمد ها") {
+                            if (!items.type) {
+                                TransactionItems(
+                                    items.name, it, items.type, items.time.toString()
+                                ) {
+                                }
+                            }
+                        } else {
+                            TransactionItems(
+                                items.name, it, items.type , items.time.toString()
+                            ) {
+                            }
+                        }
+                    }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
 

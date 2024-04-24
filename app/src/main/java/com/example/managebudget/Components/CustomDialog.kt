@@ -1,6 +1,8 @@
 package com.example.managebudget.Components
 
+import android.os.Build
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -60,7 +62,10 @@ import com.example.managebudget.ui.theme.ExpanseColor
 import com.example.managebudget.ui.theme.IncomingColor
 import com.example.managebudget.ui.theme.PrimaryLight
 import dev.burnoo.cokoin.navigation.getNavViewModel
+import java.time.LocalDate
+import java.util.Calendar
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalUnitApi::class)
 @Composable
 fun CustomDialog(
@@ -99,6 +104,7 @@ fun CustomDialog(
     val transactionCount by walletViewModel.transactionCount.observeAsState()
     val transactionName by walletViewModel.transactionName.observeAsState()
     val transactionType by walletViewModel.transactionType.observeAsState()
+    val transactionTime by walletViewModel.transactionTime.observeAsState()
 
 
     Dialog(
@@ -364,6 +370,9 @@ fun CustomDialog(
                     Button(
                         onClick = {
                             if (transactionCount != "" && transactionName != "") {
+                                val today = LocalDate.now()
+
+                                walletViewModel.transactionTime.value = today.toString()
                                 walletViewModel.getAll()
                                 dialogViewModel.onClick()
                                 onConfirm.invoke()

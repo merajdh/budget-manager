@@ -9,6 +9,7 @@ data class WalletData(
     @PrimaryKey
     val name: String,
     val type: Boolean,
-    val Count: String?,
+    val count: String?,
+    val time: String?,
 
     )
