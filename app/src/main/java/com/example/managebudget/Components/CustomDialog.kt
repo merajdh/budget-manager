@@ -1,5 +1,6 @@
 package com.example.managebudget.Components
 
+import android.annotation.SuppressLint
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -65,7 +66,9 @@ import dev.burnoo.cokoin.navigation.getNavViewModel
 import java.time.LocalDate
 import java.util.Calendar
 
-@RequiresApi(Build.VERSION_CODES.O)
+
+
+@SuppressLint("SimpleDateFormat")
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalUnitApi::class)
 @Composable
 fun CustomDialog(
@@ -326,18 +329,19 @@ fun CustomDialog(
                     walletViewModel.transactionCount.value = it
 
                 }
-                if (transactionCount != ""){
+                if (transactionCount != "") {
                     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
 
-                    Text(
-                        text = formatTomanWithCommas(transactionCount?.toLong() ?: 0),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontSize = TextUnit(14f, TextUnitType.Sp),
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
-                        modifier = Modifier
-                            .align(Alignment.End)
-                            .padding(start = 32.dp, top = 8.dp)
-                    )}
+                        Text(
+                            text = formatTomanWithCommas(transactionCount?.toLong() ?: 0),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontSize = TextUnit(14f, TextUnitType.Sp),
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .padding(start = 32.dp, top = 8.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.weight(0.13f))
@@ -350,8 +354,10 @@ fun CustomDialog(
                 ) {
                     Spacer(modifier = Modifier.width(30.dp))
                     Button(
-                        onClick = { onDismiss.invoke()
-                                  dialogViewModel.onDismiss()},
+                        onClick = {
+                            onDismiss.invoke()
+                            dialogViewModel.onDismiss()
+                        },
                         modifier = Modifier.weight(0.4f),
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onBackground),
@@ -369,46 +375,51 @@ fun CustomDialog(
 
                     Button(
                         onClick = {
+                            val formattedDate = Calendar.getInstance()
                             if (transactionCount != "" && transactionName != "") {
-                                val today = LocalDate.now()
-
+                                val today = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    LocalDate.now()
+                                } else {
+                                    Calendar.getInstance()
+                                }
                                 walletViewModel.transactionTime.value = today.toString()
-                                walletViewModel.getAll()
-                                dialogViewModel.onClick()
-                                onConfirm.invoke()
-                                onDismiss.invoke()
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    "لطفا اطلاعات خواسته شده را وارد کنید ",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        },
-                        modifier = Modifier.weight(0.6f),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-                        elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 10.dp,
-                            pressedElevation = 16.dp
-                        )
-                    ) {
-
-                        Text(
-                            text = "تایید",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = PrimaryLight
-                        )
-
+                            walletViewModel.getAll()
+                            dialogViewModel.onClick()
+                            onConfirm.invoke()
+                            onDismiss.invoke()
+                        } else {
+                        Toast.makeText(
+                            context,
+                            "لطفا اطلاعات خواسته شده را وارد کنید ",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
-                    Spacer(modifier = Modifier.width(30.dp))
+                },
+                modifier = Modifier.weight(0.6f),
+                shape = RoundedCornerShape(14.dp),
+                colors =
+                    ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 10.dp,
+                    pressedElevation = 16.dp
+                )
+                ) {
 
-                }
+                Text(
+                    text = "تایید",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = PrimaryLight
+                )
 
-                Spacer(modifier = Modifier.weight(0.05f))
             }
+                Spacer(modifier = Modifier.width(30.dp))
+
+            }
+
+            Spacer(modifier = Modifier.weight(0.05f))
         }
     }
+}
 
 
 }

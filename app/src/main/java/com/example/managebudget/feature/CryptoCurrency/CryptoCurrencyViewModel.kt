@@ -8,13 +8,14 @@ import com.example.managebudget.data.DollarResponse
 import com.example.managebudget.model.Repository.CryptoRepository.CryptoRepository
 import com.example.managebudget.model.Repository.DollarRepository.DollarRepository
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 
 
 class CryptoCurrencyViewModel(
     private val dollarRepository: DollarRepository,
     private val cryptoRepository: CryptoRepository,
-    isInternetConnected: Boolean
+    isInternetConnected: Boolean = false
 ) : ViewModel() {
 
     init {
@@ -30,6 +31,7 @@ class CryptoCurrencyViewModel(
                 val dollarData = async { dollarRepository.getDataDollar() }
                 getDollarData(dollarData.await())
             }
+
         }
     }
 
@@ -38,8 +40,8 @@ class CryptoCurrencyViewModel(
     }
 
     fun refreshCryptoData(isInternetConnectedd: Boolean) {
-        viewModelScope.launch {
-            if (isInternetConnectedd) {
+        if (isInternetConnectedd) {
+            viewModelScope.launch {
                 val cryptoData = async { cryptoRepository.CryptoData() }
                 getCryptoData(cryptoData.await())
 

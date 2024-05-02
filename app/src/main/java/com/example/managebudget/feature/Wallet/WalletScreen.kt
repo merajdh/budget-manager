@@ -375,7 +375,6 @@ fun TransactionsLazyColumn(item: (WalletData) -> Unit) {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalUnitApi::class)
 @Composable
 fun TransactionItems(

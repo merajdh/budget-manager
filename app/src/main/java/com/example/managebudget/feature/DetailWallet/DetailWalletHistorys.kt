@@ -1,5 +1,6 @@
 package com.example.managebudget.feature.DetailWallet
 
+import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -51,9 +52,10 @@ import com.example.managebudget.ui.theme.ManageBudgetTheme
 import com.example.managebudget.utils.Screens
 import dev.burnoo.cokoin.navigation.getNavController
 import dev.burnoo.cokoin.navigation.getNavViewModel
+import java.text.SimpleDateFormat
 import java.time.LocalDate
+import java.util.Calendar
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DetailWalletScreen() {
     val deleteItemDialog = getNavViewModel<DeleteItemViewModel>()
@@ -102,7 +104,6 @@ fun DetailWalletScreen() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalUnitApi::class)
 @Composable
 fun LastTransactions(
@@ -176,7 +177,7 @@ fun LastTransactions(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+@SuppressLint("SimpleDateFormat")
 @Composable
 fun TransactionsLazyColumns(modifier: Modifier, type: String, item: (WalletData) -> Unit) {
     val walletViewModel = getNavViewModel<WalletViewModel>()
@@ -192,9 +193,35 @@ fun TransactionsLazyColumns(modifier: Modifier, type: String, item: (WalletData)
     ) {
 
         if (walletHistory.value != null) {
-            val today = LocalDate.now()
+             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val today = LocalDate.now()
+                val endDate = today
+                val startDate = today.minusDays(dateState.toLong())
+                walletHistory.value!!.filter { item ->
+                    val itemDate = LocalDate.parse(item.time)
+                    !itemDate.isBefore(startDate) && !itemDate.isAfter(endDate)
+                }
+                  walletHistory.value!!.sortedBy { item ->
+                    LocalDate.parse(item.time)
+                }
 
-            val endDate = today
+            } else {
+                Calendar.getInstance()
+                 val today = Calendar.getInstance()
+                 val endDate = today.clone() as Calendar
+                 val startDate = today.clone() as Calendar
+                 startDate.add(Calendar.DAY_OF_YEAR, -dateState.toInt())
+
+                 walletHistory.value!!.filter { item ->
+                     val itemDate = Calendar.getInstance()
+                     itemDate.time = item.time?.let { SimpleDateFormat("yyyy-MM-dd").parse(it) }!!
+                     !(itemDate.before(startDate) || itemDate.after(endDate))
+                 }.sortedBy { item ->
+                     item.time?.let { SimpleDateFormat("yyyy-MM-dd").parse(it) }
+                 }
+
+             }
+
 
             dateState = when (type) {
                 "کلی" -> 99999
@@ -206,16 +233,8 @@ fun TransactionsLazyColumns(modifier: Modifier, type: String, item: (WalletData)
                     99999
                 }
             }
-            val startDate = today.minusDays(dateState.toLong())
-            val filteredList = walletHistory.value!!.filter { item ->
-                val itemDate = LocalDate.parse(item.time)
-                !itemDate.isBefore(startDate) && !itemDate.isAfter(endDate)
-            }
-            val sortedList = filteredList.sortedBy { item ->
-                LocalDate.parse(item.time)
-            }
 
-            items(sortedList) { items ->
+            items(walletHistory.value!!) { items ->
                 Spacer(modifier = Modifier.height(8.dp))
                 items.count?.let { formatNumberWithCurrency(it.toDouble()) }?.let {
                     if (type == "هزینه ها") {
@@ -235,7 +254,7 @@ fun TransactionsLazyColumns(modifier: Modifier, type: String, item: (WalletData)
                             }
                         } else {
                             TransactionItems(
-                                items.name, it, items.type , items.time.toString()
+                                items.name, it, items.type, items.time.toString()
                             ) {
                             }
                         }

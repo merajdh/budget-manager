@@ -59,12 +59,7 @@ fun Navigation() {
                         R.drawable.ic_wallet_unselected
 
                     ),
-                    BottomNavigationItems(
-                        Screens.SettingScreen.route,
-                        R.drawable.ic_setting_selected,
-                        R.drawable.ic_setting_unselected
 
-                    ),
 
                 )
 

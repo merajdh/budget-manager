@@ -24,13 +24,13 @@ val MyTypography = Typography(
     titleMedium = TextStyle(
         fontFamily = Fonts,
         fontWeight = FontWeight.W300,
-        fontSize = 20.sp
+        fontSize = 18.sp
     ),
 
     labelMedium = TextStyle(
         fontFamily = Fonts,
         fontWeight = FontWeight.W500,
-        fontSize = 28.sp
+        fontSize = 22.sp
     ),
 
 )
