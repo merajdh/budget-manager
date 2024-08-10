@@ -104,14 +104,14 @@ fun DeleteDialog(
                         clipToCompositionBounds = true,
                         contentScale = ContentScale.FillWidth,
                         modifier = Modifier
-                            .weight(0.2f)
+                            .weight(0.1f)
                             .fillMaxSize(),
                         composition = composition,
                         progress = { animProgress })
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Text(text = "آیا می خواهید این تراکنش را حذف کنید ؟",
-                        modifier = Modifier.weight(0.5f),
+                        modifier = Modifier.weight(0.4f).padding(top = 15.dp),
                         color = MaterialTheme.colorScheme.onPrimary.copy(0.9f),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.W400,
@@ -136,7 +136,7 @@ fun DeleteDialog(
                             )
 
                         ) {
-                            Text(text = "انصراف", style = MaterialTheme.typography.bodyMedium)
+                            Text(text = "انصراف", style = MaterialTheme.typography.bodyMedium , color = PrimaryLight)
 
                         }
 
@@ -160,7 +160,7 @@ fun DeleteDialog(
                             Text(
                                 text = "تایید",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = PrimaryLight
+                                color = MaterialTheme.colorScheme.onPrimary
                             )
 
                         }

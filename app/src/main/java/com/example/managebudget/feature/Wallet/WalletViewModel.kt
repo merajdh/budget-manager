@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.managebudget.data.WalletData
 import com.example.managebudget.db.WalletDao
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class WalletViewModel(private val walletDao: WalletDao) : ViewModel() {
@@ -19,6 +20,12 @@ class WalletViewModel(private val walletDao: WalletDao) : ViewModel() {
     val incomesData = MutableLiveData(0)
     val currentTotalData = MutableLiveData(0)
 
+    init {
+        viewModelScope.launch {
+            transactionData.value = walletDao.getAll()
+        }
+    }
+
 
     fun insertOrUpdateData(data: WalletData) {
         viewModelScope.launch {
@@ -31,7 +38,10 @@ class WalletViewModel(private val walletDao: WalletDao) : ViewModel() {
     fun deleteItem(item : WalletData){
         viewModelScope.launch {
             walletDao.deleteTransaction(item)
+            transactionData.value = walletDao.getAll()
+
         }
+
     }
 
 

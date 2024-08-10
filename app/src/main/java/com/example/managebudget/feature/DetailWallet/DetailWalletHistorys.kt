@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
@@ -54,7 +55,11 @@ import dev.burnoo.cokoin.navigation.getNavController
 import dev.burnoo.cokoin.navigation.getNavViewModel
 import java.text.SimpleDateFormat
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.time.temporal.ChronoUnit
 import java.util.Calendar
+import java.util.Date
 
 @Composable
 fun DetailWalletScreen() {
@@ -103,7 +108,33 @@ fun DetailWalletScreen() {
         }
     }
 }
+@SuppressLint("NewApi")
+fun parseDate(dateString: String, formatter: DateTimeFormatter): LocalDate? {
+    return try {
+        LocalDate.parse(dateString, formatter)
+    } catch (e: DateTimeParseException) {
+        null // Return null if the date string is invalid
+    }
+}
+@SuppressLint("NewApi")
+fun filterEvents(events: List<WalletData>, endDate: LocalDate,type : String, formatter: DateTimeFormatter): List<WalletData> {
+    return events.filter { event ->
+        val day  = when (type) {
+            "کلی" -> 99999
+            "ماهانه" -> 30
+            "هفتگی" -> 7
+            "درآمد ها" -> 99999
+            "هزینه ها" -> 99999
+            else -> {
+                99999
+            }
+        }
+        val startDate = endDate.minusDays(day.toLong())
 
+        val eventDate = event.time?.let { parseDate(it, formatter) }
+        eventDate != null && eventDate in startDate..endDate
+    }
+}
 @OptIn(ExperimentalUnitApi::class)
 @Composable
 fun LastTransactions(
@@ -111,6 +142,8 @@ fun LastTransactions(
     items: (WalletData) -> Unit,
     onBack: () -> Unit
 ) {
+    val walletViewModel = getNavViewModel<WalletViewModel>()
+
 
     Box(modifier = modifier) {
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -159,7 +192,27 @@ fun LastTransactions(
                         .padding(start = 23.dp)
                         .weight(0.1f)
                 ) {
+
+                    walletViewModel.getAll()
                     time = it
+                }
+                val walletViewModel = getNavViewModel<WalletViewModel>()
+                walletViewModel.getAll()
+                val walletHistory = walletViewModel.transactionData.observeAsState()
+                if (walletHistory.value.toString() == "[]") {
+
+                    Text(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 30.dp),
+                        textAlign = TextAlign.Center,
+                        text = "تراکنشی تا الان ثبت نکردید",
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
+
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = TextUnit(15f, TextUnitType.Sp)
+                    )
+
                 }
 
                 TransactionsLazyColumns(
@@ -184,86 +237,58 @@ fun TransactionsLazyColumns(modifier: Modifier, type: String, item: (WalletData)
     walletViewModel.getAll()
     val walletHistory = walletViewModel.transactionData.observeAsState()
 
-    var dateState by remember {
-        mutableStateOf(99999)
-    }
+
+
     LazyColumn(
         modifier = modifier.height(1000.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
         if (walletHistory.value != null) {
-             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
                 val today = LocalDate.now()
-                val endDate = today
-                val startDate = today.minusDays(dateState.toLong())
-                walletHistory.value!!.filter { item ->
-                    val itemDate = LocalDate.parse(item.time)
-                    !itemDate.isBefore(startDate) && !itemDate.isAfter(endDate)
-                }
-                  walletHistory.value!!.sortedBy { item ->
-                    LocalDate.parse(item.time)
-                }
 
-            } else {
-                Calendar.getInstance()
-                 val today = Calendar.getInstance()
-                 val endDate = today.clone() as Calendar
-                 val startDate = today.clone() as Calendar
-                 startDate.add(Calendar.DAY_OF_YEAR, -dateState.toInt())
-
-                 walletHistory.value!!.filter { item ->
-                     val itemDate = Calendar.getInstance()
-                     itemDate.time = item.time?.let { SimpleDateFormat("yyyy-MM-dd").parse(it) }!!
-                     !(itemDate.before(startDate) || itemDate.after(endDate))
-                 }.sortedBy { item ->
-                     item.time?.let { SimpleDateFormat("yyyy-MM-dd").parse(it) }
-                 }
-
-             }
+                items( filterEvents(walletHistory.value!!  ,today ,type, dateFormatter)) { items ->
+                    val deleteItemDialog = getNavViewModel<DeleteItemViewModel>()
 
 
-            dateState = when (type) {
-                "کلی" -> 99999
-                "ماهانه" -> 30
-                "هفتگی" -> 7
-                "درآمد ها" -> 99999
-                "هزینه ها" -> 99999
-                else -> {
-                    99999
-                }
-            }
-
-            items(walletHistory.value!!) { items ->
-                Spacer(modifier = Modifier.height(8.dp))
-                items.count?.let { formatNumberWithCurrency(it.toDouble()) }?.let {
-                    if (type == "هزینه ها") {
-                        if (items.type) {
-                            TransactionItems(
-                                items.name, it, items.type, items.time.toString()
-                            ) {
-                            }
-                        }
-                    } else {
-                        if (type == "درآمد ها") {
-                            if (!items.type) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    items.count?.let { formatNumberWithCurrency(it.toDouble()) }?.let {
+                        if (type == "هزینه ها") {
+                            if (items.type) {
                                 TransactionItems(
                                     items.name, it, items.type, items.time.toString()
                                 ) {
+                                    item.invoke(items)
+                                    deleteItemDialog.onClick()
                                 }
                             }
                         } else {
-                            TransactionItems(
-                                items.name, it, items.type, items.time.toString()
-                            ) {
+                            if (type == "درآمد ها") {
+                                if (!items.type) {
+                                    TransactionItems(
+                                        items.name, it, items.type, items.time.toString()
+                                    ) {
+                                        item.invoke(items)
+                                        deleteItemDialog.onClick()
+                                    }
+                                }
+                            } else {
+                                TransactionItems(
+                                    items.name, it, items.type, items.time.toString()
+                                ) {
+                                    item.invoke(items)
+                                    deleteItemDialog.onClick()
+                                }
                             }
                         }
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-
             }
-        }
 
+        }
     }
 }

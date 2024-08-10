@@ -1,6 +1,8 @@
 package com.example.managebudget.feature
 
 import android.annotation.SuppressLint
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -14,6 +16,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.ExperimentalUnitApi
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -32,8 +37,9 @@ import com.example.managebudget.ui.theme.ManageBudgetTheme
 import com.example.managebudget.utils.Screens
 import dev.burnoo.cokoin.navigation.KoinNavHost
 
+@RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalUnitApi::class)
 @Composable
 fun Navigation() {
     val navController = rememberNavController()
@@ -114,6 +120,7 @@ fun Navigation() {
                                             Text(
                                                 text = items.Title,
                                                 style = MaterialTheme.typography.bodyMedium,
+                                                fontSize = TextUnit(14f , TextUnitType.Sp)
                                             )
                                             Spacer(modifier = Modifier.height(2.dp))
 

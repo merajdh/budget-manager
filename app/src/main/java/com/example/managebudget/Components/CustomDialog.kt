@@ -68,7 +68,7 @@ import java.util.Calendar
 
 
 
-@SuppressLint("SimpleDateFormat")
+@SuppressLint("SimpleDateFormat", "NewApi")
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalUnitApi::class)
 @Composable
 fun CustomDialog(
@@ -375,13 +375,8 @@ fun CustomDialog(
 
                     Button(
                         onClick = {
-                            val formattedDate = Calendar.getInstance()
                             if (transactionCount != "" && transactionName != "") {
-                                val today = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                    LocalDate.now()
-                                } else {
-                                    Calendar.getInstance()
-                                }
+                                val today = LocalDate.now()
                                 walletViewModel.transactionTime.value = today.toString()
                             walletViewModel.getAll()
                             dialogViewModel.onClick()

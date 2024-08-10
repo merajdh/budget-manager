@@ -89,9 +89,9 @@ fun CryptoCurrencyScreen(
     })
     viewModel.refreshDollarData(NetworkChecker(context).isInternetConnected)
     viewModel.refreshCryptoData(NetworkChecker(context).isInternetConnected)
+    
     val dollar = viewModel.dollarData.observeAsState()
     val crypto = viewModel.cryptoData.observeAsState()
-
     ManageBudgetTheme(color = MaterialTheme.colorScheme.secondary, isDark = false) {
 
         Column(
@@ -111,7 +111,8 @@ fun CryptoCurrencyScreen(
 
             ) {
 
-                var isConected by remember { mutableStateOf(false) }
+                var isConected by remember { mutableStateOf(true) }
+
 
                 LazyColumn(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -122,11 +123,7 @@ fun CryptoCurrencyScreen(
                     broadcastReceiver = object : BroadcastReceiver() {
                         override fun onReceive(p0: Context?, p1: Intent?) {
                             val internet: Boolean = NetworkChecker(context).isInternetConnected
-                            isConected = if (internet){
-                                true
-                            }else{
-                                false
-                            }
+                            isConected = internet
                             // if internet disconnected show error for user
 
                         }
@@ -175,8 +172,7 @@ fun CryptoCurrencyScreen(
                         items(itemCount) {
                             val data = crypto.value!!.data[it]
 
-
-                            if (data.rAW != null && data.rAW.uSD.pRICE > 0.0001) {
+                            if (data.rAW != null && data.rAW.uSD.pRICE > 0.0001 ) {
 
                                 val persianDigits =
                                     arrayOf("۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹")
@@ -326,9 +322,6 @@ fun CryptoCurrencyScreen(
                     }
                     item {
 
-
-
-
                         AnimatedVisibility(
                             visible = !isConected,
                             enter = fadeIn(
@@ -354,8 +347,8 @@ fun CryptoCurrencyScreen(
                                 Text(
                                     text = "برای دسترسی به این قسمت نیاز به اینترنت روشن دارید",
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontSize = TextUnit(17f, TextUnitType.Sp),
-                                    color = MaterialTheme.colorScheme.onSecondary,
+                                    fontSize = TextUnit(15f, TextUnitType.Sp),
+                                    color = PrimaryLight,
                                     maxLines = 1,
                                     modifier = Modifier
                                         .align(Alignment.CenterHorizontally)
@@ -393,18 +386,19 @@ fun CryptoPriceItems(
     var dominantColor by remember { mutableStateOf(Color.White) }
     val bitmap = remember { mutableStateOf<Bitmap?>(null) }
 
-    LaunchedEffect(key1 = cryptoIcon) {
-        val loadedBitmap = withContext(Dispatchers.IO) {
-            BitmapFactory.decodeStream(java.net.URL(cryptoIcon).openStream())
-        }
+    Log.v("icon", cryptoIcon)
+        LaunchedEffect(key1 = cryptoIcon) {
+            val loadedBitmap = withContext(Dispatchers.IO) {
+                BitmapFactory.decodeStream(java.net.URL(cryptoIcon).openStream())
+            }
 
-        bitmap.value = loadedBitmap
-        val palette = Palette.from(loadedBitmap).generate()
-        val dominantSwatch =
-            palette.dominantSwatch ?: palette.vibrantSwatch ?: palette.lightVibrantSwatch
-            ?: palette.darkVibrantSwatch
-        dominantColor = dominantSwatch?.rgb?.let { Color(it) } ?: Color.White
-    }
+            bitmap.value = loadedBitmap
+            val palette = Palette.from(loadedBitmap).generate()
+            val dominantSwatch =
+                palette.dominantSwatch ?: palette.vibrantSwatch ?: palette.lightVibrantSwatch
+                ?: palette.darkVibrantSwatch
+            dominantColor = dominantSwatch?.rgb?.let { Color(it) }!!.copy(alpha = 0.5f) ?: Color.Black
+        }
 
 
     Card(

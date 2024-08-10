@@ -30,6 +30,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
@@ -105,6 +106,17 @@ fun WalletScreen() {
                         deleteItemDialog.onDismiss()
                     }) {
                         item.value?.let { walletViewModel.deleteItem(it) }
+                        scope.launch {
+                            delay(500)
+                            walletViewModel.getAll()
+                            walletViewModel.totalExpenses()
+                            walletViewModel.totalIncomes()
+                            walletViewModel.totalCurrent()
+                        }
+
+                        Log.v("dialog", deleteItemDialog.isDialogOpen.toString())
+
+
                     }
                 }
 
@@ -115,9 +127,8 @@ fun WalletScreen() {
 
                     }, onConfirm = {
                         walletViewModel.addDataWallet()
-
                         scope.launch {
-                            delay(200)
+                            delay(50)
                             walletViewModel.getAll()
                             walletViewModel.totalExpenses()
                             walletViewModel.totalIncomes()
@@ -142,22 +153,18 @@ fun WalletScreen() {
 
                     )
 
-                    LastTransactions(
-                        modifier = Modifier
-                            .weight(0.6f),
-                        items = {
-                            item.value = it
-                        },
-                        onClickMore = {
+                    LastTransactions(modifier = Modifier.weight(0.6f), items = {
+                        item.value = it
+                    }, onClickMore = {
 
 
-                            navController.navigate(Screens.DetailWalletScreen.route) {
+                        navController.navigate(Screens.DetailWalletScreen.route) {
 
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
                             }
                         }
+                    }
 
                     ) {
                         dialogViewModel.onClick()
@@ -174,10 +181,7 @@ fun WalletScreen() {
 @OptIn(ExperimentalUnitApi::class)
 @Composable
 fun InComeExpanse(
-    modifier: Modifier,
-    currentPrice: String,
-    currentExpense: String,
-    currentIncome: String
+    modifier: Modifier, currentPrice: String, currentExpense: String, currentIncome: String
 ) {
     val persianDigits = arrayOf("۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹")
 
@@ -190,18 +194,15 @@ fun InComeExpanse(
             modifier = Modifier.padding(top = 35.dp)
         )
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-            val text =
-                currentPrice.map {
-                    if (it != '-') {
-                        persianDigits[
-                            it.toString().toInt()]
+            val text = currentPrice.map {
+                if (it != '-') {
+                    persianDigits[it.toString().toInt()]
 
-                    } else {
-                        '-'
-                    }
+                } else {
+                    '-'
+                }
 
-                }.joinToString("")
-                    .let { formatNumberWithCurrency(it.toInt().toDouble()) }
+            }.joinToString("").let { formatNumberWithCurrency(it.toInt().toDouble()) }
 
             Log.v("last", currentPrice)
 
@@ -215,8 +216,7 @@ fun InComeExpanse(
         }
 
         Row() {
-            InComeExpanseCard(
-                backColor = ExpanseColor,
+            InComeExpanseCard(backColor = ExpanseColor,
                 titleText = "هزینه ها",
                 countText = currentExpense.map { persianDigits[it.toString().toInt()] }
                     .joinToString("")
@@ -225,8 +225,7 @@ fun InComeExpanse(
                     .weight(0.5f)
                     .padding(start = 25.dp, end = 6.dp)
             )
-            InComeExpanseCard(
-                backColor = IncomingColor,
+            InComeExpanseCard(backColor = IncomingColor,
                 titleText = "درآمد",
                 countText = currentIncome.map { persianDigits[it.toString().toInt()] }
                     .joinToString("")
@@ -312,24 +311,41 @@ fun LastTransactions(
                         fontWeight = FontWeight.Bold,
                         fontSize = TextUnit(20f, TextUnitType.Sp),
                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.95f),
-                        modifier = Modifier
-                            .padding(start = 30.dp)
+                        modifier = Modifier.padding(start = 30.dp)
                     )
-                    Text(
-                        text = "بیشتر...",
+                    Text(text = "بیشتر...",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
                         modifier = Modifier
                             .padding(end = 30.dp)
                             .clickable() {
                                 onClickMore.invoke()
-                            }
-                    )
+                            })
                 }
 
             }
+            val walletViewModel = getNavViewModel<WalletViewModel>()
+            walletViewModel.getAll()
+            val walletHistory = walletViewModel.transactionData.observeAsState()
+            if (walletHistory.value.toString() == "[]") {
+
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 30.dp),
+                    textAlign = TextAlign.Center,
+                    text = "تراکنشی تا الان ثبت نکردید",
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
+
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontSize = TextUnit(15f, TextUnitType.Sp)
+                )
+
+            }
+
             TransactionsLazyColumn() {
-                items.invoke(it)
+                    items.invoke(it)
+
             }
 
         }
@@ -343,20 +359,20 @@ fun LastTransactions(
     }
 }
 
+@OptIn(ExperimentalUnitApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TransactionsLazyColumn(item: (WalletData) -> Unit) {
     val walletViewModel = getNavViewModel<WalletViewModel>()
     walletViewModel.getAll()
     val walletHistory = walletViewModel.transactionData.observeAsState()
-    val deleteItemDialog = getNavViewModel<DeleteItemViewModel>()
 
     LazyColumn(
-        modifier = Modifier.height(1000.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier.height(1000.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Top, reverseLayout = true
     ) {
         if (walletHistory.value != null) {
-            items(walletHistory.value!!.reversed().take(4)) { items ->
+            items(walletHistory.value!!.take(4)) { items ->
+                val deleteItemDialog = getNavViewModel<DeleteItemViewModel>()
                 Spacer(modifier = Modifier.height(8.dp))
                 items.count?.let { formatNumberWithCurrency(it.toDouble()) }?.let {
                     TransactionItems(
@@ -371,7 +387,6 @@ fun TransactionsLazyColumn(item: (WalletData) -> Unit) {
 
             }
         }
-
     }
 }
 
@@ -387,33 +402,27 @@ fun TransactionItems(
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
 
 
-        Card(
-            modifier = Modifier
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onLongPress = {
-                            onDelete()
-                        }
-                    )
-                }
-                .fillMaxWidth()
-                .padding(horizontal = 25.dp),
+        Card(modifier = Modifier
+            .pointerInput(Unit) {
+                detectTapGestures(onLongPress = {
+                    onDelete()
+                })
+            }
+            .fillMaxWidth()
+            .padding(horizontal = 25.dp),
             shape = RoundedCornerShape(8.dp),
             border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.onBackground.copy(0.8f)),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
             elevation = CardDefaults.cardElevation(
-                defaultElevation = 0.dp,
-                pressedElevation = 0.dp
-            )
-        ) {
-            Box( ){
+                defaultElevation = 0.dp, pressedElevation = 0.dp
+            )) {
+            Box() {
                 Text(
                     text = transactionTime,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(0.7f),
+                    color = MaterialTheme.colorScheme.onPrimary.copy(0.3f),
                     fontSize = TextUnit(10f, TextUnitType.Sp),
-                    modifier = Modifier
-                        .padding(start = 10.dp, top = 2.5.dp)
+                    modifier = Modifier.padding(start = 10.dp, top = 2.5.dp)
                 )
                 Row(
                     Modifier
@@ -422,7 +431,6 @@ fun TransactionItems(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
 
 
                     Text(
@@ -458,11 +466,12 @@ fun TransactionItems(
                                 } else {
                                     R.drawable.ic_down_growth
                                 }
-                            ), contentDescription = null,
+                            ),
+                            contentDescription = null,
                             modifier = Modifier
                                 .rotate(180f)
                                 .size(18.dp)
-                                .padding(top = 2.dp),
+                                .padding(top = 4.dp),
                             tint = if (transactionType) {
                                 ExpanseColor
                             } else {
@@ -495,8 +504,7 @@ fun AddFloatingButton(modifier: Modifier, onClick: () -> Unit) {
             tint = PrimaryLight
         )
         Text(
-            modifier = Modifier
-                .padding(start = 8.dp),
+            modifier = Modifier.padding(start = 8.dp),
             text = "تراکنش جدید",
             style = MaterialTheme.typography.bodyMedium,
             color = PrimaryLight
