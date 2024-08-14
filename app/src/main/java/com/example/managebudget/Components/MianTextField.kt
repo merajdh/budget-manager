@@ -50,7 +50,7 @@ fun MainTextField(
                 modifier = Modifier
 
                     .fillMaxWidth()
-                    .padding(horizontal = 28.dp)
+                    .padding(horizontal = 27.dp)
                     .border(
                         1.5.dp,
                         MaterialTheme.colorScheme.onBackground,

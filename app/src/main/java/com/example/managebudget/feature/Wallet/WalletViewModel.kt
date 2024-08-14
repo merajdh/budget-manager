@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.managebudget.data.WalletData
 import com.example.managebudget.db.WalletDao
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.math.BigInteger
 
 class WalletViewModel(private val walletDao: WalletDao) : ViewModel() {
 
@@ -16,9 +16,9 @@ class WalletViewModel(private val walletDao: WalletDao) : ViewModel() {
     val transactionType = MutableLiveData(false)
     val transactionTime = MutableLiveData("")
     val transactionData = MutableLiveData<List<WalletData>>()
-    val expensesData = MutableLiveData(0)
-    val incomesData = MutableLiveData(0)
-    val currentTotalData = MutableLiveData(0)
+    val expensesData = MutableLiveData<BigInteger>()
+    val incomesData = MutableLiveData<BigInteger>()
+    val currentTotalData = MutableLiveData<BigInteger>()
 
     init {
         viewModelScope.launch {
@@ -35,7 +35,7 @@ class WalletViewModel(private val walletDao: WalletDao) : ViewModel() {
         }
     }
 
-    fun deleteItem(item : WalletData){
+    fun deleteItem(item: WalletData) {
         viewModelScope.launch {
             walletDao.deleteTransaction(item)
             transactionData.value = walletDao.getAll()
@@ -57,8 +57,8 @@ class WalletViewModel(private val walletDao: WalletDao) : ViewModel() {
             val walletList = walletDao.getAll()
 
             currentTotalData.value = walletList.map {
-                it.count?.toInt() ?: 0
-            }.sum()
+                it.count?.let { BigInteger(it) } ?: BigInteger.ZERO
+            }.fold(BigInteger.ZERO) { acc, bigInt -> acc + bigInt}
         }
     }
 
@@ -67,18 +67,14 @@ class WalletViewModel(private val walletDao: WalletDao) : ViewModel() {
 
             val walletList = walletDao.getAll()
 
-            expensesData.value = walletList.map {
-
+            expensesData.value = walletList.map { it ->
                 if (it.type) {
-
-                    it.count.toString().replace("-", "").toInt()
-
-                } else {
-                    0
+                    it.count?.let { BigInteger(it) } ?: BigInteger.ZERO
+                }else{
+                    BigInteger.ZERO
                 }
-            }.sum()
+            }.fold(BigInteger.ZERO) { acc, bigInt -> acc + bigInt}
         }
-
     }
 
     fun totalIncomes() {
@@ -88,13 +84,14 @@ class WalletViewModel(private val walletDao: WalletDao) : ViewModel() {
 
             incomesData.value = walletList.map {
                 if (!it.type) {
-                    it.count?.toIntOrNull() ?: 0
-                } else {
-                    0
+                    it.count?.toString()?.let { countStr -> BigInteger(countStr) } ?: BigInteger.ZERO
+                }else{
+                    BigInteger.ZERO
                 }
-            }.sum()
-        }
+            }.fold(BigInteger.ZERO) { acc, bigInt -> acc + bigInt }
 
+
+        }
     }
 
     fun getAll() {

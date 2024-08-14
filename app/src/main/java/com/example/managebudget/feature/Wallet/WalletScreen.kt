@@ -16,11 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -41,7 +39,6 @@ import com.example.managebudget.Components.CustomDialog
 import com.example.managebudget.Components.DeleteDialog
 import com.example.managebudget.R
 import com.example.managebudget.data.WalletData
-import com.example.managebudget.extensions.convertGregorianToPersian
 import com.example.managebudget.extensions.formatNumberWithCurrency
 import com.example.managebudget.extensions.removeZeros
 import com.example.managebudget.feature.Wallet.DeleteItemViewModel
@@ -56,6 +53,7 @@ import dev.burnoo.cokoin.navigation.getNavController
 import dev.burnoo.cokoin.navigation.getNavViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.math.BigInteger
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -106,13 +104,10 @@ fun WalletScreen() {
                         deleteItemDialog.onDismiss()
                     }) {
                         item.value?.let { walletViewModel.deleteItem(it) }
-                        scope.launch {
-                            delay(500)
                             walletViewModel.getAll()
                             walletViewModel.totalExpenses()
                             walletViewModel.totalIncomes()
                             walletViewModel.totalCurrent()
-                        }
 
                         Log.v("dialog", deleteItemDialog.isDialogOpen.toString())
 
@@ -194,15 +189,20 @@ fun InComeExpanse(
             modifier = Modifier.padding(top = 35.dp)
         )
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-            val text = currentPrice.map {
-                if (it != '-') {
-                    persianDigits[it.toString().toInt()]
+            val text = if (currentPrice != "null") {
+                currentPrice.map {
+                    if (it != '-') {
+                        persianDigits[it.toString().toInt()]
 
-                } else {
-                    '-'
-                }
+                    } else {
+                        '-'
+                    }
 
-            }.joinToString("").let { formatNumberWithCurrency(it.toInt().toDouble()) }
+                }.joinToString("").let { formatNumberWithCurrency(it.toBigInteger().toDouble()) }
+            } else {
+                BigInteger.ZERO
+            }
+
 
             Log.v("last", currentPrice)
 
@@ -218,18 +218,29 @@ fun InComeExpanse(
         Row() {
             InComeExpanseCard(backColor = ExpanseColor,
                 titleText = "هزینه ها",
-                countText = currentExpense.map { persianDigits[it.toString().toInt()] }
-                    .joinToString("")
-                    .let { removeZeros(formatNumberWithCurrency(it.toInt().toDouble())) },
+                countText =
+                if (currentExpense != "null") {
+                    currentExpense.replace("-" , "").map { persianDigits[it.toString().toInt()] }
+                        .joinToString("")
+                        .let { removeZeros(formatNumberWithCurrency(it.toBigInteger().toDouble())) }.replaceFirst("", "-")
+                } else {
+                    "۰"
+                },
                 modifier = Modifier
                     .weight(0.5f)
                     .padding(start = 25.dp, end = 6.dp)
             )
-            InComeExpanseCard(backColor = IncomingColor,
+            InComeExpanseCard(
+                backColor = IncomingColor,
                 titleText = "درآمد",
-                countText = currentIncome.map { persianDigits[it.toString().toInt()] }
-                    .joinToString("")
-                    .let { removeZeros(formatNumberWithCurrency(it.toInt().toDouble())) },
+                countText =
+                if (currentPrice != "null") {
+                    currentIncome.map { persianDigits[it.toString().toInt()] }
+                        .joinToString("")
+                        .let { removeZeros(formatNumberWithCurrency(it.toBigInteger().toDouble())) }
+                }else{
+                     "۰"
+                     },
                 modifier = Modifier
                     .weight(0.5f)
                     .padding(start = 6.dp, end = 25.dp)
@@ -344,7 +355,7 @@ fun LastTransactions(
             }
 
             TransactionsLazyColumn() {
-                    items.invoke(it)
+                items.invoke(it)
 
             }
 
@@ -368,13 +379,18 @@ fun TransactionsLazyColumn(item: (WalletData) -> Unit) {
     val walletHistory = walletViewModel.transactionData.observeAsState()
 
     LazyColumn(
-        modifier = Modifier.height(1000.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Top, reverseLayout = true
+        modifier = Modifier.height(1000.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top,
+        reverseLayout = true
     ) {
         if (walletHistory.value != null) {
             items(walletHistory.value!!.take(4)) { items ->
                 val deleteItemDialog = getNavViewModel<DeleteItemViewModel>()
                 Spacer(modifier = Modifier.height(8.dp))
-                items.count?.let { formatNumberWithCurrency(it.toDouble()) }?.let {
+                items.count?.let {
+                    it.toDoubleOrNull()?.let { it1 -> formatNumberWithCurrency(it1) }
+                }?.let {
                     TransactionItems(
                         items.name, it, items.type, items.time.toString()
                     ) {
@@ -426,8 +442,8 @@ fun TransactionItems(
                 )
                 Row(
                     Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 20.dp),
+                        .fillMaxSize()
+                        .padding(vertical = 25.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -437,8 +453,9 @@ fun TransactionItems(
                         text = transactionName,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier
-                            .padding(start = 15.dp)
-                            .wrapContentHeight(Alignment.CenterVertically)
+                            .fillMaxWidth(0.6f)
+                            .fillMaxHeight()
+                            .padding(start = 15.dp, top = 5.dp)
                     )
 
 

@@ -313,7 +313,9 @@ fun CustomDialog(
                     supportText = null,
                     textValue = transactionName.toString()
                 ) {
-                    walletViewModel.transactionName.value = it
+                    if (it.length <= 64) {
+                        walletViewModel.transactionName.value = it
+                    }
                 }
                 Spacer(modifier = Modifier.weight(0.02f))
 
@@ -326,7 +328,9 @@ fun CustomDialog(
                     textValue =
                     transactionCount.toString()
                 ) {
-                    walletViewModel.transactionCount.value = it
+                    if (it.length <= 13) {
+                        walletViewModel.transactionCount.value = it
+                    }
 
                 }
                 if (transactionCount != "") {
